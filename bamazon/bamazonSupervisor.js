@@ -64,10 +64,11 @@ function departmentProductSales(){
 
 
 
-  var table = new Table({ //making the table
-    head: ["Department Id","Department Name","Overhead Costs","Product Sales","Total Profit"],
-    colWidths: [20,20,20,20,20]
-  });
+
+
+  function tablePush(item){
+    table.push(item);
+  }
 
 
   connection.query("SELECT * FROM departments",function(err,result){
@@ -81,13 +82,16 @@ function departmentProductSales(){
       departmentList.push(result[i]);
     }
 
+
+    // console.log(departmentList);
+
               connection.query("SELECT department_name from departments group by department_name",function(err,result){
                 if(err) throw err;
                 var departmentNames = [];
                 for(var i = 0; i < result.length; i++){
                   departmentNames.push(result[i]);
                 }
-
+                // console.log(departmentNames);
 
 
 
@@ -98,67 +102,73 @@ function departmentProductSales(){
 
 
 
+
                             connection.query("SELECT * from products where department_name = ?",[departmentNames[k].department_name],function(err,result){
 
-                                var count = 0;
+
+
+
+                                var departmentSales = 0;
+                                var totalProfit;
+
+                                // console.log(result);
 
                                 if(err) throw err;
+
+
+
                                       if(result.length){
-
-
-                                            var departmentSales = 0;
-                                            var departmentSelectName;
-                                            var totalProfit;
-
-
 
 
                                             // console.log(result); //get items within select department
                                             for(var j = 0; j < result.length; j++){
                                               departmentSales += result[j].product_sales;
+                                              // console.log(result[j]);
+                                            }
+                                            // console.log(departmentSales);
+
+                                            for(var a = 0; a < departmentList.length; a++){
+                                              if(departmentList[a].department_name == result[0].department_name){
+                                                var select = departmentList[a];
+                                                select.product_sales = departmentSales;
+                                                select.total_profit = select.product_sales - select.over_head_costs;
+                                                var valueArray = [];
+                                                Object.keys(select).forEach(function(prop){
+                                                  valueArray.push(select[prop]);
+
+                                                });
+
+                                                var table = new Table({ //making the table
+                                                  head: ["Department Id","Department Name","Overhead Costs","Product Sales","Total Profit"],
+                                                  colWidths: [20,20,20,20,20]
+                                                });
+
+                                                table.push(valueArray);
+
+
+
+                                                console.log("\n" + table.toString());
+
+
+
+                                              }
                                             }
 
 
 
-
-
-                                            for(var h = 0; h < departmentList.length; h++){
-
-
-
-                                                    if(departmentList[h].department_name == result[h].department_name){
-                                                      departmentList[h].department_sales = departmentSales;
-                                                      departmentList[h].total_profit = departmentList[h].department_sales - departmentList[h].over_head_costs;
-                                                      var finishedObj = departmentList[h];
-                                                      // console.log(finishedObj);
-                                                      var attributeHolder = [];
-                                                      Object.keys(finishedObj).forEach(function(properties){
-                                                        attributeHolder.push(finishedObj[properties]);
-                                                      });
-                                                      table.push(attributeHolder);
-                                                      if(h == 0){
-                                                        console.log(table.toString());
-                                                        listOptions();
-                                                      }
-
-                                                    }
-
-
-
-
-                                            }
 
 
 
                                       }
 
+
+
                               });
                     }
+
+
           });
   });
-
-
-
 
 
 

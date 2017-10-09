@@ -65,7 +65,7 @@ function listOptions(){
       for(var i = 0; i < result.length; i++){
         var table = new Table();
         table.push(
-          {"Item ID: " : colors.green(result[i].item_id)},
+          {"Item ID: " : colors.green(result[i].product_id)},
           {"Product Name: " : colors.green(result[i].product_name)},
           {"Department Name:" : colors.green(result[i].department_name)},
           {"Item Price: " : colors.green(result[i].price)},
@@ -87,7 +87,7 @@ function listOptions(){
           for(var i = 0; i < result.length; i++){
             var table = new Table();
             table.push(
-              {"Item ID: " : colors.green(result[i].item_id)},
+              {"Item ID: " : colors.green(result[i].product_id)},
               {"Product Name: " : colors.green(result[i].product_name)},
               {"Department Name:" : colors.green(result[i].department_name)},
               {"Item Price: " : colors.green(result[i].price)},
@@ -128,11 +128,11 @@ function listOptions(){
             var idArray = [];
 
             for(var i = 0; i < items.length; i++){
-              idArray.push(items[i].item_id);
+              idArray.push(items[i].product_id);
             }
 
             for(var i = 0; i < items.length; i++){
-              if(items[i].item_id === firstQuestion){
+              if(items[i].product_id === firstQuestion){
                 selectedItem = items[i];
               }
             }
@@ -160,7 +160,7 @@ function listOptions(){
           }
         }
       ]).then(function(userInput){
-          connection.query("UPDATE products SET stock_quantity = ? WHERE item_id = ?",[secondQuestion + selectedItem.stock_quantity,firstQuestion],function(err,result){
+          connection.query("UPDATE products SET stock_quantity = ? WHERE product_id = ?",[secondQuestion + selectedItem.stock_quantity,firstQuestion],function(err,result){
             if(err) throw err;
             console.log("\n" + result.affectedRows + " products affected");
             listOptions();
@@ -210,6 +210,7 @@ function listOptions(){
           connection.query("INSERT INTO products(product_name,department_name,price,stock_quantity) VALUES(?,?,?,?)",[userInput.itemName,userInput.departmentName,userInput.priceSet,userInput.stockSet],function(err,result){
             if(err) throw err;
             console.log("\n" + result.affectedRows + " products inserted");
+            listOptions();
           });
       });
   }
