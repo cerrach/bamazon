@@ -3,6 +3,7 @@ var Table = require('cli-table');
 var colors = require('colors/safe');
 var inquire = require('inquirer');
 
+//connection information
 var connection = mysql.createConnection({
 
   host: "localhost",
@@ -15,6 +16,8 @@ var connection = mysql.createConnection({
 
 });
 
+
+//connecting action
 connection.connect(function(err){
   if(err) throw err;
 
@@ -22,6 +25,8 @@ connection.connect(function(err){
   listOptions();
 });
 
+
+//main menu
 function listOptions(){
   inquire
     .prompt([
@@ -49,127 +54,134 @@ function listOptions(){
 }
 
 
-var table = new Table({ //making the table
-  head: ["Department Id","Department Name","Overhead Costs","Product Sales","Total Profit"],
-  colWidths: [20,20,20,20,20]
-});
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
 
 function departmentProductSales(){
 
-  connection.query("SELECT * FROM departments", function(err,result){ //have all the department entries now
+  //establishing table for function
+
+
+
+  var table = new Table({ //making the table
+    head: ["Department Id","Department Name","Overhead Costs","Product Sales","Total Profit"],
+    colWidths: [20,20,20,20,20]
+  });
+
+
+  connection.query("SELECT * FROM departments",function(err,result){
+
     if(err) throw err;
-    // console.log(result) //logs each individual entry
+    var departmentList = [];
 
 
 
+    for(var i = 0; i < result.length; i++){
+      departmentList.push(result[i]);
+    }
 
-
-
-    function getSales(){
-        connection.query("SELECT department_name FROM departments GROUP BY department_name", function(err,resultOther){ //getting all the unique department names
-
-
-
-                for(var i = 0; i < resultOther.length; i++){ //for every department name
-
-                          var selected = resultOther[i];
-                          var selectedKey = selected.department_name;
-
-
-                          var productSales = 0;
-                          var salesArray = [];
-
-                          connection.query("SELECT * FROM products WHERE department_name = ?",[selectedKey],function(err,resultAgain){ //find all products that have the selected department name
-
-                                  for(var k = 0; k < resultAgain.length; k++){
-
-                                    var entry;
-
-                                      entry = resultAgain[i];
-                                      console.log(entry);
-                                      productSales += parseFloat(entry.product_sales); //calculate the sales for every department
-                                  }
-
-
-
-
-                                  var valueArray = [];
-                                  result[i].department_sales
-                                  Object.keys(result[i]).forEach(function(property){
-                                    // console.log(entry[property]);
-                                    valueArray.push(entry[property]);
-
-                                  });
-
-
-                                  // console.log(valueArray);
-                                  table.push(valueArray);
-                                }
-
-                                console.log(table.toString())
-
-
-                          });
+              connection.query("SELECT department_name from departments group by department_name",function(err,result){
+                if(err) throw err;
+                var departmentNames = [];
+                for(var i = 0; i < result.length; i++){
+                  departmentNames.push(result[i]);
                 }
 
 
-        });
-    }
-
-          // 
-          // for(var i = 0; i < result.length; i++){
-          //   var entry = result[i];
-          //
-          //   // console.log(entry);
-          //
-          //
-          //
-          //   var valueArray = [];
-          //   result[i].department_sales
-          //   Object.keys(result[i]).forEach(function(property){
-          //     // console.log(entry[property]);
-          //     valueArray.push(entry[property]);
-          //
-          //   });
-          //
-          //
-          //   // console.log(valueArray);
-          //   table.push(valueArray);
-          // }
-          //
-          // console.log(table.toString());
 
 
-    //calculate profit for each department
-      //get all objects based on deparment and select product sales
-      //add them all up and subtract oberhead costs
-      //add attribute to individual objects
-
-    //nested for loop that makes new array for every object and pushes to table
 
 
+                    for(var k = 0 ; k < departmentNames.length; k++){
+
+
+
+
+                            connection.query("SELECT * from products where department_name = ?",[departmentNames[k].department_name],function(err,result){
+
+                                var count = 0;
+
+                                if(err) throw err;
+                                      if(result.length){
+
+
+                                            var departmentSales = 0;
+                                            var departmentSelectName;
+                                            var totalProfit;
+
+
+
+
+                                            // console.log(result); //get items within select department
+                                            for(var j = 0; j < result.length; j++){
+                                              departmentSales += result[j].product_sales;
+                                            }
+
+
+
+
+
+                                            for(var h = 0; h < departmentList.length; h++){
+
+
+
+                                                    if(departmentList[h].department_name == result[h].department_name){
+                                                      departmentList[h].department_sales = departmentSales;
+                                                      departmentList[h].total_profit = departmentList[h].department_sales - departmentList[h].over_head_costs;
+                                                      var finishedObj = departmentList[h];
+                                                      // console.log(finishedObj);
+                                                      var attributeHolder = [];
+                                                      Object.keys(finishedObj).forEach(function(properties){
+                                                        attributeHolder.push(finishedObj[properties]);
+                                                      });
+                                                      table.push(attributeHolder);
+                                                      if(h == 0){
+                                                        console.log(table.toString());
+                                                        listOptions();
+                                                      }
+
+                                                    }
+
+
+
+
+                                            }
+
+
+
+                                      }
+
+                              });
+                    }
+          });
   });
+
+
+
+
+
+
 }
 
 function createDepartment(){
-//simple insert into database
+  inquire
+    .prompt([
+      {
+        name: "department_name",
+        type: "input",
+        message: "What is the name of the new department?"
+      },
+      {
+        name: "department_overhead",
+        type: "input",
+        message: "What is the overhead cost of this department?"
+      }
+    ]).then(function(userInput){
+      connection.query("INSERT INTO departments(department_name,over_head_costs) VALUES(?,?)",[userInput.department_name,userInput.department_overhead],function(err,result){
+        if(err) throw err;
+        console.log("\n" + result.affectedRows + " department inserted");
+        listOptions();
+      });
+    });
 }
